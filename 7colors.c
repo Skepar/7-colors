@@ -23,22 +23,22 @@ void init_board(char board[SIZE][SIZE], int size) {
 /** Returns 1 if the cell (i,j) is adjacent to a cell possessed by player*/
 int player_adjacent(char player_symbol,int i,int j, char board[SIZE][SIZE]) {
     if (i-1 >= 0) {
-      if (board[i-1][j]=player_symbol) {
+      if (board[i-1][j]==player_symbol) {
         return 1;
       }
     }
     if (i+1 < SIZE) {
-      if (board[i+1][j]=player_symbol) {
+      if (board[i+1][j]==player_symbol) {
         return 1;
       }
     }
     if (j-1 >= 0) {
-      if (board[i][j-1]=player_symbol) {
+      if (board[i][j-1]==player_symbol) {
         return 1;
       }
     }
     if (j+1 < SIZE) {
-      if (board[i][j+1]=player_symbol) {
+      if (board[i][j+1]==player_symbol) {
         return 1;
       }
     }
@@ -53,20 +53,20 @@ void world_update(int player, char color,char board[SIZE][SIZE])
 {
     int modified = 0;
     char player_symbol;
-    if (player = 0) {
+    if (player == 0) {
       player_symbol = 'v';
     } else {
       player_symbol ='^';
     }
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-          if (board[i][j] = color && player_adjacent(player_symbol,i,j, board)) {
+          if (board[i][j] == color && player_adjacent(player_symbol,i,j, board)) {
             board[i][j]=player_symbol;
             modified = 1;
           }
         }
     }
-    if (modified = 1) {
+    if (modified == 1) {
       world_update(player, color, board);
     }
 }
