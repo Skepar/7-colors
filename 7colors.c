@@ -76,10 +76,26 @@ void world_update(int player, char color,char board[SIZE][SIZE])
     }
 }
 
-void play_turn(int* player_pointer, char board[SIZE][SIZE]) {
+double rate_symbol(char symbol, char board[SIZE][SIZE]) {
+  int number_symbol = 0;
+  double rate;
+  for (int i = 0; i < SIZE; i++) {
+      for (int j = 0; j < SIZE; j++) {
+        if (board[i][j] == symbol) {
+          number_symbol++;
+        }
+      }
+    }
+  rate = ( (double) number_symbol/ (double) (SIZE * SIZE) ) * 100;
+  return rate;
+}
+
+int play_turn(int* player_pointer, char board[SIZE][SIZE]) {
   char c;
   char color;
   char player_symbol = symbol(*player_pointer);
+  double rate_player_0;
+  double rate_player_1;
   printf("\nWhich color ? (%c turn)\n",player_symbol);
   scanf("%c",&color);
   while((c = getchar()) != '\n' && c != EOF) {}
@@ -89,8 +105,21 @@ void play_turn(int* player_pointer, char board[SIZE][SIZE]) {
   world_update(*player_pointer,color,board);
   print_board(board, SIZE);
   *player_pointer = (*player_pointer + 1) % 2;
-  printf("%i",*player_pointer);
+  rate_player_0 =rate_symbol('v',board);
+  rate_player_1 =rate_symbol('^',board);
+  printf("\nPlayer v owns %f %% of the map", rate_player_0);
+  printf("\nPlayer ^ owns %f %% of the map", rate_player_1);
+  if (rate_player_0 > 50) {
+    return 0;
+  }
+  if (rate_player_1 > 50) {
+    return 1;
+  }
+  if (rate_player_0 == rate_player_1 && rate_player_0 >= 50) {
+    return 2;
+  }
   play_turn(player_pointer,board);
+
 }
 
 
@@ -102,6 +131,11 @@ int main(void) {
   print_board(board, SIZE);
   int player = 0;
   int* player_pointer = &player;
-  play_turn(player_pointer,board);
+  int winner = play_turn(player_pointer,board);
+  if (winner == 2) {
+    printf("\n\nDraw\n");
+  } else {
+    printf("\n\nPlayer %c wins\n",symbol(winner));
+  }
     return 0;
 }
