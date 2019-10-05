@@ -1,54 +1,33 @@
-/* Template of the 7 wonders of the world of the 7 colors assigment. */
-
-#include <stdio.h>     /* printf */
-
-/* We want a 30x30 board game by default */
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #define BOARD_SIZE 30
 
-/** Represent the actual current board game
- *
- * NOTE: global variables are usually discouraged (plus encapsulation in
- *     an appropriate data structure would also be preferred), but don't worry.
- *     For this first assignment, no dinosaure will get you if you do that.
- */
-char board[BOARD_SIZE * BOARD_SIZE] = { 0 }; // Filled with zeros
-
-/** Retrieves the color of a given board cell */
-char get_cell(int x, int y)
-{
-    return board[y * BOARD_SIZE + x];
-}
-
-/** Changes the color of a given board cell */
-void set_cell(int x, int y, char color)
-{
-    board[y * BOARD_SIZE + x] = color;
-}
-
-/** Prints the current state of the board on screen
- *
- * Implementation note: It would be nicer to do this with ncurse or even
- * SDL/allegro, but this is not really the purpose of this assignment.
- */
-void print_board(void)
-{
-    int i, j;
-    for (i = 0; i < BOARD_SIZE; i++) {
-        for (j = 0; j < BOARD_SIZE; j++) {
-            printf("%c", get_cell(i, j));
+void print_board(char* board, int size) {
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            printf("%c", board[i*BOARD_SIZE + j]);
         }
         printf("\n");
     }
 }
 
+void init_board(char* board, int size) {
+	for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+			board[i*size + j] = rand()%7+65;
+        }
+    }
+}
+
 /** Program entry point */
-int main(void)
-{
-    printf("\n\nWelcome to the 7 wonders of the world of the 7 colors\n"
-	   "*****************************************************\n\n"
-	   "Current board state:\n");
+int main(void) {
+	char board[BOARD_SIZE * BOARD_SIZE] = {0};
+	
+	srand(time(NULL));
+	
+	init_board(board, BOARD_SIZE);
+    print_board(board, BOARD_SIZE);
 
-    print_board();
-
-    return 0; // Everything went well
+    return 0;
 }
