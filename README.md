@@ -5,3 +5,4 @@ A reimplementation of an old DOS game
 - The actual code
 - An actual Readme
 - Better todo-list
+- Une modif quelconque dans le README
