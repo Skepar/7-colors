@@ -80,7 +80,7 @@ void play_turn(int* player_pointer, char board[SIZE][SIZE]) {
   char c;
   char color;
   char player_symbol = symbol(*player_pointer);
-  printf("\nWhich color ? (%i turn)\n",*player_pointer);
+  printf("\nWhich color ? (%c turn)\n",player_symbol);
   scanf("%c",&color);
   while((c = getchar()) != '\n' && c != EOF) {}
   for (int i = 0; i< 50;i++) {
