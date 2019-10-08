@@ -4,9 +4,10 @@
 #define SIZE 30
 
 /**list of gamemodes :
-*0 : player V player
-*1 : AI random
-*2 : AI semi-random */
+*0 : player VS player
+*1 : player VS AI random
+*2 : player VS AI semi-random
+*3 : player VS AI greedy */
 
 typedef struct Game Game;
 typedef enum Status Status;
@@ -56,7 +57,7 @@ void free_board(char** board) {
     free(board);
 }
 
-/** Returns 1 if the cell (i,j) is adjacent to a cell possessed by player*/
+/** Returns 1 if the cell (i,j) is adjacent to a cell possessed by the current_player*/
 char player_adjacent(Game* game_ptr,int i,int j) {
     char player_symbol;
     if (game_ptr->current == A_PLAYING) {
@@ -120,6 +121,53 @@ void world_update(Game* game_ptr, char color) {
   	}
 }
 
+void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
+		char player_symbol;
+		if (game_ptr->current == A_PLAYING) {
+				player_symbol = '*';
+		} else {
+				player_symbol = '^';
+		}
+		explored[i][j] = 1;
+		if (game_ptr->board[i][j]==color) {
+			game_ptr->board[i][j]=player_symbol;
+			if (game_ptr->current == A_PLAYING) {
+					game_ptr->a_score++;
+			} else {
+					game_ptr->b_score++;
+			}
+		}
+		if (i-1 >= 0) {
+					if (game_ptr->board[i-1][j]==color || (game_ptr->board[i-1][j]==player_symbol && explored[i-1][j] != 1)) {
+							update(game_ptr,color,i-1,j,explored);
+			}
+		}
+		if (i+1 < SIZE) {
+					if (game_ptr->board[i+1][j]==color || (game_ptr->board[i+1][j]==player_symbol && explored[i+1][j] != 1)) {
+							update(game_ptr,color,i+1,j,explored);
+			}
+		}
+		if (j-1 >= 0) {
+					if (game_ptr->board[i][j-1]==color || (game_ptr->board[i][j-1]==player_symbol && explored[i][j-1] != 1)) {
+							update(game_ptr,color,i,j-1,explored);
+			}
+		}
+		if (j+1 < SIZE) {
+					if (game_ptr->board[i][j+1]==color || (game_ptr->board[i][j+1]==player_symbol && explored[i][j+1] != 1)) {
+							update(game_ptr,color,i,j+1,explored);
+			}
+		}
+}
+
+void world_update2(Game* game_ptr, char color) {
+		char explored[SIZE][SIZE] = {0}; //explored[i][j]=1 when the cell (i,j) have already been updated
+		if (game_ptr->current == A_PLAYING) {
+				update(game_ptr,color,SIZE-1,0,explored);
+		} else {
+				update(game_ptr,color,0,SIZE-1,explored);
+		}
+}
+
 char random_strategy(Game* game_ptr) {
     return rand()%7+65;
 }
@@ -144,7 +192,7 @@ int nth_occurence(int n, char c, char* array, int size) {
 }
 
 char semi_random_strategy(Game* game_ptr) {
-    char neighbour_colors[7] = {0};
+    char neighbour_colors[7] = {0}; //At the end of the function, neighbour_colors[i] contains 1 if the ith color is adjacent to the player zone, 0 otherwise
     for (int i = 0; i < SIZE; i++) {
   		for (int j = 0; j < SIZE; j++) {
         if (game_ptr->board[i][j] != '*' && game_ptr->board[i][j] != '^' && player_adjacent(game_ptr,i,j) == 1) {
@@ -156,12 +204,18 @@ char semi_random_strategy(Game* game_ptr) {
     return nth_occurence(rand()%n, 1, neighbour_colors, 7)+65;
 }
 
+char greedy_strategy(Game* game_ptr) {
+	return 'A'; //TO DO
+}
+
 char ai_strategy(Game* game_ptr) {
   if (game_ptr->game_mode == 1) {
     return random_strategy(game_ptr);
   } else if (game_ptr->game_mode == 2) {
     return semi_random_strategy(game_ptr);
-  }
+  } else if (game_ptr->game_mode == 3) {
+		return greedy_strategy(game_ptr);
+	}
   return 'A';
 }
 
@@ -192,7 +246,7 @@ void play_turn(Game* game_ptr) {
         } else {
           color = ai_strategy(game_ptr);
         }
-  	world_update(game_ptr, color);
+  	world_update2(game_ptr, color);
   	game_ptr->current = (game_ptr->current + 1) % 2;    //swap A_PLAYING and B_PLAYING
 
   	if (rate_Aplayer > 50) {
