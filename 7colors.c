@@ -184,6 +184,11 @@ void play_turn(Game* game_ptr) {
         	printf("\nWhich color ? (%c turn)\n",player_symbol);
           scanf("%c",&color);
           while((c = getchar()) != '\n' && c != EOF) {}
+					while (color < 65 || color > 71) {
+						printf("\n%c is not a valid color !\nWhich color ? (%c turn)\n",color,player_symbol);
+	          scanf("%c",&color);
+	          while((c = getchar()) != '\n' && c != EOF) {}
+					}
         } else {
           color = ai_strategy(game_ptr);
         }
