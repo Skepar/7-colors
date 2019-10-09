@@ -14,7 +14,9 @@ struct Game {
 	enum Status current;
     int a_score;
     int b_score;
-	char game_mode;     // set to 1 if the second player is a computer, 0 otherwise
+	char game_mode;
+	double a_rate;
+	double b_rate;     // set to 1 if the second player is a computer, 0 otherwise
 };
 
 #endif

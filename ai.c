@@ -26,7 +26,11 @@ char semi_random_strategy(Game* game_ptr) {
         }
     }
     int n = sum(neighbour_colors,7);
-    return nth_occurence(rand()%n, 1, neighbour_colors, 7)+65;
+    if (n==0) {
+        return 'A';
+    } else {
+        return nth_occurence(rand()%n, 1, neighbour_colors, 7)+65;
+    }
 }
 
 void count_greedy(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE],int* score_ptr) {

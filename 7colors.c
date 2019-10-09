@@ -132,16 +132,11 @@ void play_turn(Game* game_ptr) {
     char c;
     char color;
     char player_symbol = get_symbol(game_ptr);
-
-    double rate_Aplayer = ((double) game_ptr->a_score/(double) (SIZE * SIZE)) * 100;
-  	double rate_Bplayer = ((double) game_ptr->b_score/(double) (SIZE * SIZE)) * 100;
-  	printf("\nPlayer * owns %.2f %% of the map", rate_Aplayer);
-  	printf("\nPlayer ^ owns %.2f %% of the map", rate_Bplayer);
     if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
         printf("\nWhich color ? (%c turn)\n",player_symbol);
         scanf("%c",&color);
         while((c = getchar()) != '\n' && c != EOF) {}
-        
+
         while (color < 65 || color > 71) {
             printf("\n%c is not a valid color !\nWhich color ? (%c turn)\n",color,player_symbol);
             scanf("%c",&color);
@@ -150,38 +145,43 @@ void play_turn(Game* game_ptr) {
     } else {
           color = ai_strategy(game_ptr);
     }
-  	
+
     world_update2(game_ptr, color);
   	game_ptr->current = (game_ptr->current + 1) % 2;    //swap A_PLAYING and B_PLAYING
-
-  	if (rate_Aplayer > 50) {
+    game_ptr->a_rate = ((double) game_ptr->a_score/(double) (SIZE * SIZE)) * 100;
+    game_ptr->b_rate = ((double) game_ptr->b_score/(double) (SIZE * SIZE)) * 100;
+  	if (game_ptr->a_rate > 50) {
           game_ptr->current = A_WON;
   	}
-  	if (rate_Bplayer > 50) {
+  	if (game_ptr->b_rate > 50) {
           game_ptr->current = B_WON;
   	}
-  	if (rate_Aplayer == rate_Bplayer && rate_Aplayer >= 50) {
+  	if (game_ptr->a_rate == game_ptr->b_rate && game_ptr->a_rate >= 50) {
           game_ptr->current = DRAW;
   	}
 }
 
 Status run(Game* game_ptr, char verbose) {
     while (game_ptr->current == A_PLAYING || game_ptr->current == B_PLAYING) {
-        if (verbose) print_board(game_ptr->board);
+        if (verbose) {
+            print_board(game_ptr->board);
+            printf("\nPlayer * owns %.2f %% of the map", game_ptr->a_rate);
+            printf("\nPlayer ^ owns %.2f %% of the map", game_ptr->b_rate);
+        }
         play_turn(game_ptr);
     }
+    if (verbose) {
+        print_board(game_ptr->board);
 
-    print_board(game_ptr->board);
-
-	if (game_ptr->current == DRAW) {
-        printf("\n\nDraw\n");
-	} else if (game_ptr->current == A_WON) {
-        printf("\n\nPlayer * wins\n");
-	} else {
-        printf("\n\nPlayer ^ wins\n");
+    	if (game_ptr->current == DRAW) {
+            printf("\n\nDraw\n");
+    	} else if (game_ptr->current == A_WON) {
+            printf("\n\nPlayer * wins\n");
+    	} else {
+            printf("\n\nPlayer ^ wins\n");
+        }
     }
     free_board(game_ptr->board);
-    
     return game_ptr->current;
 }
 
@@ -189,9 +189,9 @@ void run_n_times(int n) {
     int a_victories = 0;
     int b_victories = 0;
     Status result;
-    
+
     for (int i = 0; i < n; i++) {
-        Game game = { init_board(1), A_PLAYING, 1, 1, 4};
+        Game game = { init_board(1), A_PLAYING, 1, 1, 4, 0, 0};
         result = run(&game, 0);
         if (result == A_WON) {
             a_victories++;
@@ -199,13 +199,13 @@ void run_n_times(int n) {
             b_victories++;
         }
     }
-    printf("\nA : %d\nB : %d", a_victories, b_victories);
+    printf("\nA : %d\nB : %d\n", a_victories, b_victories);
 }
 
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    run_n_times(5000);
+    run_n_times(2000);
 
 	return 0;
 }
