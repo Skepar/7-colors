@@ -5,6 +5,12 @@
 #include "game.h"
 #define SIZE 30
 
+/**list of gamemodes :
+*0 : player VS player
+*1 : player VS AI random
+*2 : player VS AI semi-random
+*3 : player VS AI greedy */
+
 typedef struct Game Game;
 typedef enum Status Status;
 
@@ -72,7 +78,7 @@ void world_update(Game* game_ptr, char color) {
 
 void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
   	char player_symbol = get_symbol(game_ptr);
-		
+
     explored[i][j] = 1;
     if (game_ptr->board[i][j]==color) {
         game_ptr->board[i][j]=player_symbol;
@@ -151,7 +157,7 @@ void play_turn(Game* game_ptr) {
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    Game game = { init_board(), A_PLAYING, 1, 1, 2};
+    Game game = { init_board(), A_PLAYING, 1, 1, 3};
 
     while (game.current == A_PLAYING || game.current == B_PLAYING) {
         print_board(game.board);
