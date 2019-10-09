@@ -80,14 +80,19 @@ char greedy_strategy(Game* game_ptr) {
 }
 
 char ai_strategy(Game* game_ptr) {
-  if (game_ptr->game_mode == 1) {
-    return random_strategy(game_ptr);
-  } else if (game_ptr->game_mode == 2) {
-    return semi_random_strategy(game_ptr);
-  } else if (game_ptr->game_mode == 3) {
+	if (game_ptr->game_mode == 1) {
+		return random_strategy(game_ptr);
+	} else if (game_ptr->game_mode == 2) {
+		return semi_random_strategy(game_ptr);
+	} else if (game_ptr->game_mode == 3) {
 		return greedy_strategy(game_ptr);
+	} else {
+		if (game_ptr->current == A_PLAYING) {
+			return semi_random_strategy(game_ptr);
+		} else {
+			return greedy_strategy(game_ptr);
+		}
 	}
-  return 'A';
 }
 
 /** Returns 1 if the cell (i,j) is adjacent to a cell possessed by the current_player*/

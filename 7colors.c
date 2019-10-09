@@ -9,7 +9,8 @@
 *0 : player VS player
 *1 : player VS AI random
 *2 : player VS AI semi-random
-*3 : player VS AI greedy */
+*3 : player VS AI greedy
+*4 : AI semi-random VS AI greedy */
 
 typedef struct Game Game;
 typedef enum Status Status;
@@ -27,17 +28,25 @@ void print_board(char** board) {
 	}
 }
 
-char** init_board() {
+char** init_board(char fair) {
     char** board = malloc(SIZE * sizeof(char*));
 
 	for (int i = 0; i < SIZE; i++) {
 		board[i] = malloc(SIZE * sizeof(char));
-        for (int j = 0; j < SIZE; j++) {
-			board[i][j]=rand()%7+65;
-		}
+        if (fair) {
+            for (int j = 0; j <= i; j++) {
+                char rand_ch = rand()%7+65;
+                board[i][j] = rand_ch;
+                board[j][i] = rand_ch;
+            }
+		} else {
+            for (int j = 0; j < SIZE; j++) {
+                board[i][j] = rand()%7+65;
+            }
+        }
 	}
-	board[SIZE-1][0]='*';
-	board[0][SIZE-1]='^';
+	board[SIZE-1][0] = '*';
+	board[0][SIZE-1] = '^';
 
     return board;
 }
@@ -128,19 +137,21 @@ void play_turn(Game* game_ptr) {
   	double rate_Bplayer = ((double) game_ptr->b_score/(double) (SIZE * SIZE)) * 100;
   	printf("\nPlayer * owns %.2f %% of the map", rate_Aplayer);
   	printf("\nPlayer ^ owns %.2f %% of the map", rate_Bplayer);
-    if (game_ptr->game_mode == 0 || game_ptr->current == A_PLAYING) {
-        	printf("\nWhich color ? (%c turn)\n",player_symbol);
-          scanf("%c",&color);
-          while((c = getchar()) != '\n' && c != EOF) {}
-					while (color < 65 || color > 71) {
-						printf("\n%c is not a valid color !\nWhich color ? (%c turn)\n",color,player_symbol);
-	          scanf("%c",&color);
-	          while((c = getchar()) != '\n' && c != EOF) {}
-					}
-        } else {
-          color = ai_strategy(game_ptr);
+    if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
+        printf("\nWhich color ? (%c turn)\n",player_symbol);
+        scanf("%c",&color);
+        while((c = getchar()) != '\n' && c != EOF) {}
+        
+        while (color < 65 || color > 71) {
+            printf("\n%c is not a valid color !\nWhich color ? (%c turn)\n",color,player_symbol);
+            scanf("%c",&color);
+            while((c = getchar()) != '\n' && c != EOF) {}
         }
-  	world_update2(game_ptr, color);
+    } else {
+          color = ai_strategy(game_ptr);
+    }
+  	
+    world_update2(game_ptr, color);
   	game_ptr->current = (game_ptr->current + 1) % 2;    //swap A_PLAYING and B_PLAYING
 
   	if (rate_Aplayer > 50) {
@@ -154,27 +165,47 @@ void play_turn(Game* game_ptr) {
   	}
 }
 
-/** Program entry point */
-int main(void) {
-    srand(time(NULL));
-    Game game = { init_board(), A_PLAYING, 1, 1, 3};
-
-    while (game.current == A_PLAYING || game.current == B_PLAYING) {
-        print_board(game.board);
-        play_turn(&game);
+Status run(Game* game_ptr, char verbose) {
+    while (game_ptr->current == A_PLAYING || game_ptr->current == B_PLAYING) {
+        if (verbose) print_board(game_ptr->board);
+        play_turn(game_ptr);
     }
 
-    print_board(game.board);
+    print_board(game_ptr->board);
 
-	if (game.current == DRAW) {
+	if (game_ptr->current == DRAW) {
         printf("\n\nDraw\n");
-	} else if (game.current == A_WON) {
+	} else if (game_ptr->current == A_WON) {
         printf("\n\nPlayer * wins\n");
 	} else {
         printf("\n\nPlayer ^ wins\n");
     }
+    free_board(game_ptr->board);
+    
+    return game_ptr->current;
+}
 
-    free_board(game.board);
+void run_n_times(int n) {
+    int a_victories = 0;
+    int b_victories = 0;
+    Status result;
+    
+    for (int i = 0; i < n; i++) {
+        Game game = { init_board(1), A_PLAYING, 1, 1, 4};
+        result = run(&game, 0);
+        if (result == A_WON) {
+            a_victories++;
+        } else {
+            b_victories++;
+        }
+    }
+    printf("\nA : %d\nB : %d", a_victories, b_victories);
+}
+
+/** Program entry point */
+int main(void) {
+    srand(time(NULL));
+    run_n_times(5000);
 
 	return 0;
 }
