@@ -10,7 +10,8 @@
 *1 : player VS AI random
 *2 : player VS AI semi-random
 *3 : player VS AI greedy
-*4 : AI semi-random VS AI greedy */
+*4 : AI semi-random VS AI greedy
+*5 : player VS foreseeing_greedy*/
 
 typedef struct Game Game;
 typedef enum Status Status;
@@ -191,7 +192,7 @@ void run_n_times(int n) {
     Status result;
 
     for (int i = 0; i < n; i++) {
-        Game game = { init_board(1), A_PLAYING, 1, 1, 3, 0, 0};
+        Game game = { init_board(1), A_PLAYING, 1, 1, 5, 0, 0};
         result = run(&game, 0);
         if (result == A_WON) {
             a_victories++;
