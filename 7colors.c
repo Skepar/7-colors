@@ -192,7 +192,7 @@ void run_n_times(int n) {
     Status result;
 
     for (int i = 0; i < n; i++) {
-        Game game = { init_board(1), A_PLAYING, 1, 1, 5, 0, 0};
+        Game game = { init_board(1), A_PLAYING, 1, 1, 4, 0, 0};
         result = run(&game, 0);
         if (result == A_WON) {
             a_victories++;

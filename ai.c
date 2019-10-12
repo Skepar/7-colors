@@ -36,8 +36,8 @@ char semi_random_strategy(Game* game_ptr) {
     }
 }
 
-void count_greedy(Game* game_ptr,char color,int i,int j,enum Cell_status (*explored_ptr)[SIZE][SIZE],int* score_ptr) {
-  	char player_symbol = get_symbol(game_ptr);
+void update_cell(Game* game_ptr,char color,int i,int j,enum Cell_status (*explored_ptr)[SIZE][SIZE],int* score_ptr, int is_second_turn) {
+    char player_symbol = get_symbol(game_ptr);
     if (game_ptr->board[i][j]==color) {
         *score_ptr += 1;
         (*explored_ptr)[i][j] = COLOR;
@@ -46,56 +46,35 @@ void count_greedy(Game* game_ptr,char color,int i,int j,enum Cell_status (*explo
     } else {
         (*explored_ptr)[i][j] = NOT_COLOR;
     }
-    if (i-1 >= 0) {
-        if ((game_ptr->board[i-1][j]==color || game_ptr->board[i-1][j]==player_symbol) && (*explored_ptr)[i-1][j] == UNEXPLORED) {
-            count_greedy(game_ptr,color,i-1,j,explored_ptr,score_ptr);
-        }
-    }
-    if (i+1 < SIZE) {
-        if ((game_ptr->board[i+1][j]==color || game_ptr->board[i+1][j]==player_symbol) && (*explored_ptr)[i+1][j] == UNEXPLORED) {
-            count_greedy(game_ptr,color,i+1,j,explored_ptr,score_ptr);
-        }
-    }
-    if (j-1 >= 0) {
-        if ((game_ptr->board[i][j-1]==color || game_ptr->board[i][j-1]==player_symbol) && (*explored_ptr)[i][j-1] == UNEXPLORED) {
-            count_greedy(game_ptr,color,i,j-1,explored_ptr,score_ptr);
-        }
-    }
-    if (j+1 < SIZE) {
-        if ((game_ptr->board[i][j+1]==color || game_ptr->board[i][j+1]==player_symbol) && (*explored_ptr)[i][j+1] == UNEXPLORED) {
-            count_greedy(game_ptr,color,i,j+1,explored_ptr,score_ptr);
-        }
+    if (is_second_turn) {
+        (*explored_ptr)[i][j] = EXPLORED_TWO_TIMES;
     }
 }
 
-void count_greedy2(Game* game_ptr,char color,int i,int j,enum Cell_status (*explored_ptr)[SIZE][SIZE],int* score_ptr) {
-    (*explored_ptr)[i][j] = EXPLORED_TWO_TIMES;
-    if (game_ptr->board[i][j]==color) {
-        *score_ptr += 1;
-    }
-    if (i-1 >= 0) {
-        if ((game_ptr->board[i-1][j]==color || (*explored_ptr)[i-1][j]==COLOR || (*explored_ptr)[i-1][j]==PLAYER) && (*explored_ptr)[i-1][j] != EXPLORED_TWO_TIMES) {
-            count_greedy2(game_ptr,color,i-1,j,explored_ptr,score_ptr);
-        }
-    }
-    if (i+1 < SIZE) {
-        if ((game_ptr->board[i+1][j]==color || (*explored_ptr)[i+1][j]==COLOR || (*explored_ptr)[i+1][j]==PLAYER) && (*explored_ptr)[i+1][j] != EXPLORED_TWO_TIMES) {
-            count_greedy2(game_ptr,color,i+1,j,explored_ptr,score_ptr);
-        }
-    }
-    if (j-1 >= 0) {
-        if ((game_ptr->board[i][j-1]==color || (*explored_ptr)[i][j-1]==COLOR || (*explored_ptr)[i][j-1]==PLAYER) && (*explored_ptr)[i][j-1] != EXPLORED_TWO_TIMES) {
-            count_greedy2(game_ptr,color,i,j-1,explored_ptr,score_ptr);
-        }
-    }
-    if (j+1 < SIZE) {
-        if ((game_ptr->board[i][j+1]==color || (*explored_ptr)[i][j+1]==COLOR || (*explored_ptr)[i][j+1]==PLAYER) && (*explored_ptr)[i][j+1] != EXPLORED_TWO_TIMES) {
-            count_greedy2(game_ptr,color,i,j+1,explored_ptr,score_ptr);
-        }
+int must_be_explored(Game* game_ptr,char color,int i,int j,enum Cell_status (*explored_ptr)[SIZE][SIZE], int is_second_turn) {
+    char player_symbol = get_symbol(game_ptr);
+    if (is_second_turn) {
+        return ((game_ptr->board[i][j]==color || (*explored_ptr)[i][j]==COLOR || (*explored_ptr)[i][j]==PLAYER) && (*explored_ptr)[i][j] != EXPLORED_TWO_TIMES);
+    } else {
+        return ((game_ptr->board[i][j]==color || game_ptr->board[i][j]==player_symbol) && (*explored_ptr)[i][j] == UNEXPLORED);
     }
 }
 
-//EXPLORED N'EST PAS MODIFIE, IL FAUT LE CHANGER AVEC DES POINTEURS PAR EX POUR QU'IL CHANGE ENTRE COUNT 1 ET COUNT 2
+void count_greedy(Game* game_ptr,char color,int i,int j,enum Cell_status (*explored_ptr)[SIZE][SIZE],int* score_ptr, int is_second_turn) {
+  	update_cell(game_ptr, color, i, j, explored_ptr, score_ptr, is_second_turn);
+    if ((i-1 >= 0) && must_be_explored(game_ptr,color,i-1,j,explored_ptr,is_second_turn)) {
+        count_greedy(game_ptr,color,i-1,j,explored_ptr,score_ptr,is_second_turn);
+    }
+    if ((i+1 < SIZE) && must_be_explored(game_ptr,color,i+1,j,explored_ptr,is_second_turn)) {
+        count_greedy(game_ptr,color,i+1,j,explored_ptr,score_ptr,is_second_turn);
+    }
+    if ((j-1 >= 0) && must_be_explored(game_ptr,color,i,j-1,explored_ptr,is_second_turn)) {
+        count_greedy(game_ptr,color,i,j-1,explored_ptr,score_ptr,is_second_turn);
+    }
+    if ((j+1 < SIZE) && must_be_explored(game_ptr,color,i,j+1,explored_ptr,is_second_turn)) {
+        count_greedy(game_ptr,color,i,j+1,explored_ptr,score_ptr,is_second_turn);
+    }
+}
 
 char greedy_strategy(Game* game_ptr) {
     int score_gained = 0;
@@ -107,9 +86,9 @@ char greedy_strategy(Game* game_ptr) {
         enum Cell_status explored[SIZE][SIZE] = {UNEXPLORED}; //explored[i][j]=1 when the cell (i,j) have already been updated
         enum Cell_status (*explored_ptr)[SIZE][SIZE] = &explored;
         if (game_ptr->current == A_PLAYING) {
-                count_greedy(game_ptr,color,SIZE-1,0,explored_ptr,&score);
+                count_greedy(game_ptr,color,SIZE-1,0,explored_ptr,&score,0);
         } else {
-                count_greedy(game_ptr,color,0,SIZE-1,explored_ptr,&score);
+                count_greedy(game_ptr,color,0,SIZE-1,explored_ptr,&score,0);
         }
         //printf("score_step1 %d color1 %c\n",score,color);
         if (score > score_gained)
@@ -132,16 +111,16 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
             enum Cell_status explored[SIZE][SIZE] = {UNEXPLORED}; //explored[i][j]=1 when the cell (i,j) have already been updated
             enum Cell_status (*explored_ptr)[SIZE][SIZE] = &explored;
             if (game_ptr->current == A_PLAYING) {
-                    count_greedy(game_ptr,color1,SIZE-1,0,explored_ptr,&score);
+                    count_greedy(game_ptr,color1,SIZE-1,0,explored_ptr,&score,0);
                     if (i != j) {
-                        count_greedy2(game_ptr,color2,SIZE-1,0,explored_ptr,&score);
+                        count_greedy(game_ptr,color2,SIZE-1,0,explored_ptr,&score,1);
                     }
 
             } else {
-                    count_greedy(game_ptr,color1,0,SIZE-1,explored_ptr,&score);
+                    count_greedy(game_ptr,color1,0,SIZE-1,explored_ptr,&score,0);
                     //printf("score_step1 %d color1 %c\n",score,color1);
                     if (i != j) {
-                        count_greedy2(game_ptr,color2,0,SIZE-1,explored_ptr,&score);
+                        count_greedy(game_ptr,color2,0,SIZE-1,explored_ptr,&score,1);
                         //printf("score_step2 %d color2 %c\n",score,color2);
                     }
             }
@@ -152,7 +131,7 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
             }
         }
     }
-    printf("%c",color_played);
+    //printf("%c",color_played);
     return color_played;
 }
 
