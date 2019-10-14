@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include "utils.h"
 
-DynArray* new_dynarray(int init_size) {
-	DynArray* res = malloc(sizeof(DynArray));
+AdjArray* new_array(int init_size) {
+	AdjArray* res = malloc(sizeof(AdjArray));
 	
 	res->size = init_size;
 	res->last = 0;
@@ -11,32 +11,40 @@ DynArray* new_dynarray(int init_size) {
 	return res;
 }
 
-void add_coord(DynArray* dyn, char x, char y) {
-	if (dyn->last < dyn->size-1) {
+void add_coord(AdjArray* adj, char x, char y) {
+	if (adj->last < adj->size-1) {
 		Coord* c = malloc(sizeof(Coord));
 		c->x = x;
 		c->y = y;
-		dyn->array[dyn->last] = c;
-		dyn->last++;
+		adj->array[adj->last] = c;
+		adj->last++;
 	}
 }
 
-void remove_coord(DynArray* dyn, int n) {
-	free(dyn->array[n]);
-	dyn->array[n] = dyn->array[dyn->last-1];
-	dyn->last--;
+void remove_coord(AdjArray* adj, int n) {
+	free(adj->array[n]);
+	adj->array[n] = adj->array[adj->last-1];
+	adj->last--;
 }
 
-void free_dynarray(DynArray* dyn) {
-	for (int i = 0; i < dyn->last; i++) {
-		free(dyn->array[i]);
+void free_array(AdjArray* adj) {
+	for (int i = 0; i < adj->last; i++) {
+		free(adj->array[i]);
 	}
-	free(dyn->array);
-	free(dyn);
+	free(adj->array);
+	free(adj);
 }
 
-DynArray* get_adjacent_coords(char** board, char i, char j, char size) {
-	DynArray* res = new_dynarray(4);
+int get_x(AdjArray* adj, int i) {
+	return (int) adj->array[i]->x;
+}
+
+int get_y(AdjArray* adj, int i) {
+	return (int) adj->array[i]->y;
+}
+
+AdjArray* get_adjacent_coords(char** board, char i, char j, char size) {
+	AdjArray* res = new_array(4);
 	
 	if (i-1 >= 0) add_coord(res, i-1, j);
 	if (j-1 >= 0) add_coord(res, i, j-1);

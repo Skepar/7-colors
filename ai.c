@@ -103,21 +103,25 @@ char greedy_strategy(Game* game_ptr) {
 char foreseeing_greedy_strategy(Game* game_ptr) {
     int score_gained = 0;
     char color_played = 'A';
+    int score1_gained = 0;
 	for (int i = 0; i < 7; i++){
          for (int j = 0;j < 7; j++) {
             char color1 = i+65;
             char color2 =j+65;
             int score = 0;
+            int score1 = 0;
             enum Cell_status explored[SIZE][SIZE] = {UNEXPLORED}; //explored[i][j]=1 when the cell (i,j) have already been updated
             enum Cell_status (*explored_ptr)[SIZE][SIZE] = &explored;
             if (game_ptr->current == A_PLAYING) {
                     count_greedy(game_ptr,color1,SIZE-1,0,explored_ptr,&score,0);
+                    score1 = score;
                     if (i != j) {
                         count_greedy(game_ptr,color2,SIZE-1,0,explored_ptr,&score,1);
                     }
 
             } else {
                     count_greedy(game_ptr,color1,0,SIZE-1,explored_ptr,&score,0);
+                    score1 = score;
                     //printf("score_step1 %d color1 %c\n",score,color1);
                     if (i != j) {
                         count_greedy(game_ptr,color2,0,SIZE-1,explored_ptr,&score,1);
@@ -125,8 +129,9 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
                     }
             }
             //printf("score = %d score gained = %d color = %c\n",score,score_gained,color1);
-            if (score > score_gained) {
+            if ((score > score_gained) || (score == score_gained && score1 > score1_gained)) {
                 score_gained = score;
+                score1_gained = score1;
                 color_played = color1;
             }
         }
@@ -150,7 +155,13 @@ char ai_strategy(Game* game_ptr) {
 		}
 	} else if (game_ptr->game_mode == 5) {
         return foreseeing_greedy_strategy(game_ptr);
-    }
+    } else if (game_ptr->game_mode == 6) {
+		if (game_ptr->current == A_PLAYING) {
+			return greedy_strategy(game_ptr);
+		} else {
+			return foreseeing_greedy_strategy(game_ptr);
+		}
+	}
     return 'A';
 }
 

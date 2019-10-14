@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include "utils.h"
 #include "ai.h"
 #include "game.h"
 #define SIZE 30
@@ -103,20 +104,36 @@ void world_update(Game* game_ptr, char color) {
   	if (modified == 1) {
   		world_update(game_ptr, color);
   	}
-}    
+}  
+  
+char count_free_cells(Game* game_ptr, int i, int j) {
+	AdjArray* adj= get_adjacent_coords(game_ptr->board, i, j, SIZE);
+	char sum = 0;
+	
+	for(int i = 0; i<adj->last; i++) {
+		char c = game_ptr->board[get_x(adj, i)][get_y(adj, i)];
+		if (c >= 65 && c <= 71) sum++;
+	}
+	
+	return sum;
+}
 
 void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
   	char player_symbol = get_symbol(game_ptr);
-
     explored[i][j] = 1;
-    if (game_ptr->board[i][j]==color) {
-        game_ptr->board[i][j]=player_symbol;
+    
+    if (game_ptr->board[i][j] == color) {
+        game_ptr->board[i][j] = player_symbol;
+        
         if (game_ptr->current == A_PLAYING) {
             game_ptr->a_score++;
+            game_ptr->a_perimeter += count_free_cells(game_ptr, i, j) - 1;
         } else {
             game_ptr->b_score++;
+            game_ptr->b_perimeter += count_free_cells(game_ptr, i, j) - 1;
         }
     }
+    
     if (i-1 >= 0) {
         if (game_ptr->board[i-1][j]==color || (game_ptr->board[i-1][j]==player_symbol && explored[i-1][j] != 1)) {
             update(game_ptr,color,i-1,j,explored);
@@ -140,11 +157,13 @@ void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
 }
 
 void better_world_update(Game* game_ptr, char color) {
-    char explored[SIZE][SIZE] = {0}; //explored[i][j]=1 when the cell (i,j) have already been updated
+    char explored[SIZE][SIZE] = {0};    
+    //explored[i][j]=1 when the cell (i,j) has already been updated
+    
     if (game_ptr->current == A_PLAYING) {
-            update(game_ptr,color,SIZE-1,0,explored);
+        update(game_ptr, color, SIZE-1, 0, explored);
     } else {
-            update(game_ptr,color,0,SIZE-1,explored);
+        update(game_ptr, color, 0, SIZE-1, explored);
     }
 }
 
@@ -185,8 +204,8 @@ Status run(Game* game_ptr, char verbose) {
     while (game_ptr->current == A_PLAYING || game_ptr->current == B_PLAYING) {
         if (verbose) {
             print_board(game_ptr->board);
-            printf("\nPlayer * owns %.2f %% of the map", game_ptr->a_rate);
-            printf("\nPlayer ^ owns %.2f %% of the map", game_ptr->b_rate);
+            printf("\nPlayer * owns %.2f %% of the map, has a perimeter of %d", game_ptr->a_rate, game_ptr->a_perimeter);
+            printf("\nPlayer ^ owns %.2f %% of the map, has a perimeter of %d", game_ptr->b_rate, game_ptr->b_perimeter);
         }
         play_turn(game_ptr);
     }
@@ -231,10 +250,10 @@ void run_n_times(int n) {
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    run_n_times(100);
-    /*Game* game_ptr = init_game(5, 1, A_PLAYING);
+    //run_n_times(100);
+    Game* game_ptr = init_game(3, 1);
     run(game_ptr, 1);
-    free_game(game_ptr);*/
+    free_game(game_ptr);
 
 	return 0;
 }
