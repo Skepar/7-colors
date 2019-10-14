@@ -13,7 +13,8 @@
 *2 : player VS AI semi-random
 *3 : player VS AI greedy
 *4 : AI semi-random VS AI greedy
-*5 : player VS foreseeing_greedy*/
+*5 : player VS foreseeing_greedy
+*7 : player VS perimeter based*/
 
 void print_board(char** board) {
     for (int i = 0; i < 50; i++) {
@@ -60,7 +61,7 @@ void free_board(char** board) {
 
 Game* init_game(char game_mode, char fair) {
     Game* res = malloc(sizeof(Game));
-    
+
     res->board = init_board(fair);
     res->current = A_PLAYING;
     res->a_score = 1;
@@ -70,7 +71,7 @@ Game* init_game(char game_mode, char fair) {
     res->a_perimeter = 2;
     res->b_perimeter = 2;
     res->game_mode = game_mode;
-    
+
     return res;
 }
 
@@ -104,27 +105,27 @@ void world_update(Game* game_ptr, char color) {
   	if (modified == 1) {
   		world_update(game_ptr, color);
   	}
-}  
-  
+}
+
 char count_free_cells(Game* game_ptr, int i, int j) {
 	AdjArray* adj= get_adjacent_coords(game_ptr->board, i, j, SIZE);
 	char sum = 0;
-	
+
 	for(int i = 0; i<adj->last; i++) {
 		char c = game_ptr->board[get_x(adj, i)][get_y(adj, i)];
 		if (c >= 65 && c <= 71) sum++;
 	}
-	
+
 	return sum;
 }
 
 void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
   	char player_symbol = get_symbol(game_ptr);
     explored[i][j] = 1;
-    
+
     if (game_ptr->board[i][j] == color) {
         game_ptr->board[i][j] = player_symbol;
-        
+
         if (game_ptr->current == A_PLAYING) {
             game_ptr->a_score++;
             game_ptr->a_perimeter += count_free_cells(game_ptr, i, j) - 1;
@@ -133,7 +134,7 @@ void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
             game_ptr->b_perimeter += count_free_cells(game_ptr, i, j) - 1;
         }
     }
-    
+
     if (i-1 >= 0) {
         if (game_ptr->board[i-1][j]==color || (game_ptr->board[i-1][j]==player_symbol && explored[i-1][j] != 1)) {
             update(game_ptr,color,i-1,j,explored);
@@ -157,9 +158,9 @@ void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
 }
 
 void better_world_update(Game* game_ptr, char color) {
-    char explored[SIZE][SIZE] = {0};    
+    char explored[SIZE][SIZE] = {0};
     //explored[i][j]=1 when the cell (i,j) has already been updated
-    
+
     if (game_ptr->current == A_PLAYING) {
         update(game_ptr, color, SIZE-1, 0, explored);
     } else {
@@ -232,7 +233,7 @@ void run_n_times(int n) {
     for (int i = 0; i < n; i++) {
         Game* game_ptr = init_game(6, 1);
         if (rand()%2 == 0) game_ptr->current = B_PLAYING;
-        
+
         result = run(game_ptr, 0);
         if (result == A_WON) {
             a_victories++;
@@ -251,7 +252,7 @@ void run_n_times(int n) {
 int main(void) {
     srand(time(NULL));
     //run_n_times(100);
-    Game* game_ptr = init_game(3, 1);
+    Game* game_ptr = init_game(7, 1);
     run(game_ptr, 1);
     free_game(game_ptr);
 
