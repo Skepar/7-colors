@@ -7,16 +7,21 @@
 *2 : player VS AI semi-random
 *3 : player VS AI greedy */
 
+typedef struct Game Game;
+typedef enum Status Status;
+
 enum Status { A_PLAYING, B_PLAYING, A_WON, B_WON, DRAW };
 
 struct Game {
 	char** board;
-	enum Status current;
+	Status current;
     int a_score;
     int b_score;
+    double a_rate;
+	double b_rate;
+	int a_perimeter;
+	int b_perimeter;
 	char game_mode;
-	double a_rate;
-	double b_rate;     // set to 1 if the second player is a computer, 0 otherwise
 };
 
 #endif

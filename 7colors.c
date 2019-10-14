@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "ai.h"
+#include "utils.h"
 #include "game.h"
 #define SIZE 30
 
@@ -12,9 +13,6 @@
 *3 : player VS AI greedy
 *4 : AI semi-random VS AI greedy
 *5 : player VS foreseeing_greedy*/
-
-typedef struct Game Game;
-typedef enum Status Status;
 
 void print_board(char** board) {
     for (int i = 0; i < 50; i++) {
@@ -59,6 +57,27 @@ void free_board(char** board) {
     free(board);
 }
 
+Game* init_game(char game_mode, char fair) {
+    Game* res = malloc(sizeof(Game));
+    
+    res->board = init_board(fair);
+    res->current = A_PLAYING;
+    res->a_score = 1;
+    res->b_score = 1;
+    res->a_rate = 0.11;
+    res->b_rate = 0.11;
+    res->a_perimeter = 2;
+    res->b_perimeter = 2;
+    res->game_mode = game_mode;
+    
+    return res;
+}
+
+void free_game(Game* game_ptr) {
+    free_board(game_ptr->board);
+    free(game_ptr);
+}
+
 /**Updates the board when a player has played and chosen a color
 *Note : The player is coded with an int. 0 is the bottom left player.
 *1 is the upper right player.
@@ -84,7 +103,7 @@ void world_update(Game* game_ptr, char color) {
   	if (modified == 1) {
   		world_update(game_ptr, color);
   	}
-}
+}    
 
 void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
   	char player_symbol = get_symbol(game_ptr);
@@ -120,7 +139,7 @@ void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
     }
 }
 
-void world_update2(Game* game_ptr, char color) {
+void better_world_update(Game* game_ptr, char color) {
     char explored[SIZE][SIZE] = {0}; //explored[i][j]=1 when the cell (i,j) have already been updated
     if (game_ptr->current == A_PLAYING) {
             update(game_ptr,color,SIZE-1,0,explored);
@@ -147,7 +166,7 @@ void play_turn(Game* game_ptr) {
           color = ai_strategy(game_ptr);
     }
 
-    world_update2(game_ptr, color);
+    better_world_update(game_ptr, color);
   	game_ptr->current = (game_ptr->current + 1) % 2;    //swap A_PLAYING and B_PLAYING
     game_ptr->a_rate = ((double) game_ptr->a_score/(double) (SIZE * SIZE)) * 100;
     game_ptr->b_rate = ((double) game_ptr->b_score/(double) (SIZE * SIZE)) * 100;
@@ -182,7 +201,6 @@ Status run(Game* game_ptr, char verbose) {
             printf("\n\nPlayer ^ wins\n");
         }
     }
-    free_board(game_ptr->board);
     return game_ptr->current;
 }
 
@@ -192,13 +210,16 @@ void run_n_times(int n) {
     Status result;
 
     for (int i = 0; i < n; i++) {
-        Game game = { init_board(1), A_PLAYING, 1, 1, 4, 0, 0};
-        result = run(&game, 0);
+        Game* game_ptr = init_game(4, 1);
+        //if (rand()%2 == 0) game_ptr->current = B_PLAYING;
+
+        result = run(game_ptr, 0);
         if (result == A_WON) {
             a_victories++;
         } else {
             b_victories++;
         }
+        free_game(game_ptr);
     }
     printf("\nA : %d\nB : %d\n", a_victories, b_victories);
 }
@@ -206,9 +227,10 @@ void run_n_times(int n) {
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    //run_n_times(2000);
-    Game game = { init_board(1), A_PLAYING, 1, 1, 5, 0, 0};
-    run(&game,1);
+    run_n_times(1000);
+    /*Game* game_ptr = init_game(5, 1, A_PLAYING);
+    run(game_ptr, 1);
+    free_game(game_ptr);*/
 
 	return 0;
 }
