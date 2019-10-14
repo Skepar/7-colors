@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include "utils.h"
 
 DynArray* new_dynarray(int init_size) {

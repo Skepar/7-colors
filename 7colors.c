@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 #include "ai.h"
-#include "utils.h"
 #include "game.h"
 #define SIZE 30
 
@@ -152,7 +152,7 @@ void play_turn(Game* game_ptr) {
     char c;
     char color;
     char player_symbol = get_symbol(game_ptr);
-    if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
+    if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 6 && game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
         printf("\nWhich color ? (%c turn)\n",player_symbol);
         scanf("%c",&color);
         while((c = getchar()) != '\n' && c != EOF) {}
@@ -209,25 +209,29 @@ void run_n_times(int n) {
     int b_victories = 0;
     Status result;
 
+    time_t start = clock();
     for (int i = 0; i < n; i++) {
-        Game* game_ptr = init_game(4, 1);
-        //if (rand()%2 == 0) game_ptr->current = B_PLAYING;
-
+        Game* game_ptr = init_game(6, 1);
+        if (rand()%2 == 0) game_ptr->current = B_PLAYING;
+        
         result = run(game_ptr, 0);
         if (result == A_WON) {
             a_victories++;
-        } else {
+        } else if (result == B_WON) {
             b_victories++;
         }
         free_game(game_ptr);
     }
+    time_t stop = clock();
+
     printf("\nA : %d\nB : %d\n", a_victories, b_victories);
+    printf("in %f s", (double)(stop-start)/CLOCKS_PER_SEC);
 }
 
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    run_n_times(1000);
+    run_n_times(100);
     /*Game* game_ptr = init_game(5, 1, A_PLAYING);
     run(game_ptr, 1);
     free_game(game_ptr);*/
