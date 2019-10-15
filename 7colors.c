@@ -151,7 +151,7 @@ void play_turn(Game* game_ptr) {
     char color;
     char player_symbol = get_symbol(game_ptr);
     
-    if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 6 && game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
+    if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 8 && game_ptr->game_mode != 6 && game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
         do {
             printf("\nWhich color ? (%c turn)\n",player_symbol);
             scanf("%c",&color);
@@ -229,10 +229,10 @@ void run_n_times(int n) {
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    //run_n_times(100);
-    Game* game_ptr = init_game(3, 1);
+    run_n_times(10);
+    /*Game* game_ptr = init_game(8, 1);
     run(game_ptr, 1);
-    free_game(game_ptr);
+    free_game(game_ptr);*/
 
 	return 0;
 }

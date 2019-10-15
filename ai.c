@@ -204,7 +204,14 @@ char ai_strategy(Game* game_ptr) {
 		}
 	} else if (game_ptr->game_mode == 7) {
         return perimeter_based_strategy(game_ptr);
-    }
+    } else if (game_ptr->game_mode == 8) {
+		
+		if (game_ptr->current == A_PLAYING) {
+			return foreseeing_greedy_strategy(game_ptr);
+		} else {
+			return perimeter_based_strategy(game_ptr);
+		}
+	}
     // by default, returns A. Should not happen.
     return 'A';
 }
