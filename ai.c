@@ -19,15 +19,19 @@ char random_strategy(Game* game_ptr) {
     return rand()%7+65;
 }
 
-char semi_random_strategy(Game* game_ptr) {
-    char neighbour_colors[7] = {0}; //At the end of the function, neighbour_colors[i] contains 1 if the ith color is adjacent to the player zone, 0 otherwise
+void update_possible_colors(Game* game_ptr, char (*neighbour_colors)[7]) {
     for (int i = 0; i < SIZE; i++) {
   		for (int j = 0; j < SIZE; j++) {
             if (game_ptr->board[i][j] != '*' && game_ptr->board[i][j] != '^' && player_adjacent(game_ptr,i,j) == 1) {
-                neighbour_colors[game_ptr->board[i][j]-65] = 1;
+                (*neighbour_colors)[game_ptr->board[i][j]-65] = 1;
             }
         }
     }
+}
+
+char semi_random_strategy(Game* game_ptr) {
+    char neighbour_colors[7] = {0}; //At the end of the function, neighbour_colors[i] contains 1 if the ith color is adjacent to the player zone, 0 otherwise
+    update_possible_colors(game_ptr,&neighbour_colors);
     int n = sum(neighbour_colors,7);
     if (n==0) {
         return 'A';
@@ -67,42 +71,45 @@ int must_be_explored(Game* game_ptr,char color,int i,int j,enum Cell_status (*ex
     }
 }
 
-void count_greedy(Game* game_ptr,char color,int i,int j,enum Cell_status (*explored_ptr)[SIZE][SIZE],int* score_ptr,int* perimeter_ptr, int is_second_turn, int is_perimeter_based) {
+void explore(Game* game_ptr,char color,int i,int j,enum Cell_status (*explored_ptr)[SIZE][SIZE],int* score_ptr,int* perimeter_ptr, int is_second_turn, int is_perimeter_based) {
   	update_cell(game_ptr, color, i, j, explored_ptr, score_ptr, perimeter_ptr, is_second_turn, is_perimeter_based);
     enum Cell_status origin = (*explored_ptr)[i][j];
     if ((i-1 >= 0) && must_be_explored(game_ptr,color,i-1,j,explored_ptr,is_second_turn, is_perimeter_based,origin)) {
-        count_greedy(game_ptr,color,i-1,j,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
+        explore(game_ptr,color,i-1,j,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
     }
     if ((i+1 < SIZE) && must_be_explored(game_ptr,color,i+1,j,explored_ptr,is_second_turn, is_perimeter_based,origin)) {
-        count_greedy(game_ptr,color,i+1,j,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
+        explore(game_ptr,color,i+1,j,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
     }
     if ((j-1 >= 0) && must_be_explored(game_ptr,color,i,j-1,explored_ptr,is_second_turn, is_perimeter_based,origin)) {
-        count_greedy(game_ptr,color,i,j-1,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
+        explore(game_ptr,color,i,j-1,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
     }
     if ((j+1 < SIZE) && must_be_explored(game_ptr,color,i,j+1,explored_ptr,is_second_turn, is_perimeter_based,origin)) {
-        count_greedy(game_ptr,color,i,j+1,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
+        explore(game_ptr,color,i,j+1,explored_ptr,score_ptr, perimeter_ptr,is_second_turn, is_perimeter_based);
     }
 }
 
 char perimeter_based_strategy(Game* game_ptr) {
     int potential_perimeter = -1;
     char color_played = 'A';
-	for (int i = 0; i < 7; i++)
-    {
-        char color = i+65;
-        int perimeter = 0;
-        enum Cell_status explored[SIZE][SIZE] = {UNEXPLORED}; //explored[i][j]=1 when the cell (i,j) have already been updated
-        enum Cell_status (*explored_ptr)[SIZE][SIZE] = &explored;
-        if (game_ptr->current == A_PLAYING) {
-                count_greedy(game_ptr,color,SIZE-1,0,explored_ptr,0,&perimeter,0,1);
-        } else {
-                count_greedy(game_ptr,color,0,SIZE-1,explored_ptr,0,&perimeter,0,1);
-        }
-        //printf("score_step1 %d color1 %c\n",perimeter,color);
-        if (perimeter > potential_perimeter)
-        {
-            potential_perimeter = perimeter;
-            color_played = color;
+    char neighbour_colors[7] = {0}; //At the end of the function, neighbour_colors[i] contains 1 if the ith color is adjacent to the player zone, 0 otherwise
+    update_possible_colors(game_ptr,&neighbour_colors);
+    for (int i = 0; i < 7; i++) {
+        if (neighbour_colors[i]) {
+            char color = i+65;
+            int perimeter = 0;
+            enum Cell_status explored[SIZE][SIZE] = {UNEXPLORED}; //explored[i][j]=1 when the cell (i,j) have already been updated
+            enum Cell_status (*explored_ptr)[SIZE][SIZE] = &explored;
+            if (game_ptr->current == A_PLAYING) {
+                    explore(game_ptr,color,SIZE-1,0,explored_ptr,0,&perimeter,0,1);
+            } else {
+                    explore(game_ptr,color,0,SIZE-1,explored_ptr,0,&perimeter,0,1);
+            }
+            //printf("score_step1 %d color1 %c\n",perimeter,color);
+            if (perimeter > potential_perimeter)
+            {
+                potential_perimeter = perimeter;
+                color_played = color;
+            }
         }
     }
     return color_played;
@@ -118,9 +125,9 @@ char greedy_strategy(Game* game_ptr) {
         enum Cell_status explored[SIZE][SIZE] = {UNEXPLORED}; //explored[i][j]=1 when the cell (i,j) have already been updated
         enum Cell_status (*explored_ptr)[SIZE][SIZE] = &explored;
         if (game_ptr->current == A_PLAYING) {
-                count_greedy(game_ptr,color,SIZE-1,0,explored_ptr,&score,0,0,0);
+                explore(game_ptr,color,SIZE-1,0,explored_ptr,&score,0,0,0);
         } else {
-                count_greedy(game_ptr,color,0,SIZE-1,explored_ptr,&score,0,0,0);
+                explore(game_ptr,color,0,SIZE-1,explored_ptr,&score,0,0,0);
         }
         //printf("score_step1 %d color1 %c\n",score,color);
         if (score > score_gained)
@@ -145,18 +152,18 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
             enum Cell_status explored[SIZE][SIZE] = {UNEXPLORED}; //explored[i][j]=1 when the cell (i,j) have already been updated
             enum Cell_status (*explored_ptr)[SIZE][SIZE] = &explored;
             if (game_ptr->current == A_PLAYING) {
-                    count_greedy(game_ptr,color1,SIZE-1,0,explored_ptr,&score,0,0,0);
+                    explore(game_ptr,color1,SIZE-1,0,explored_ptr,&score,0,0,0);
                     score1 = score;
                     if (i != j) {
-                        count_greedy(game_ptr,color2,SIZE-1,0,explored_ptr,&score,0,1,0);
+                        explore(game_ptr,color2,SIZE-1,0,explored_ptr,&score,0,1,0);
                     }
 
             } else {
-                    count_greedy(game_ptr,color1,0,SIZE-1,explored_ptr,&score,0,0,0);
+                    explore(game_ptr,color1,0,SIZE-1,explored_ptr,&score,0,0,0);
                     score1 = score;
                     //printf("score_step1 %d color1 %c\n",score,color1);
                     if (i != j) {
-                        count_greedy(game_ptr,color2,0,SIZE-1,explored_ptr,&score,0,1,0);
+                        explore(game_ptr,color2,0,SIZE-1,explored_ptr,&score,0,1,0);
                         //printf("score_step2 %d color2 %c\n",score,color2);
                     }
             }
