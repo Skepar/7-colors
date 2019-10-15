@@ -75,14 +75,14 @@ int must_be_explored(Game* game_ptr, char color, int i, int j, CellStatus (*expl
 void explore(Game* game_ptr,char color,int i,int j,CellStatus (*explored_ptr)[SIZE][SIZE],int* score_ptr,int* perimeter_ptr, int is_second_turn, int is_perimeter_based) {
   	update_cell(game_ptr, color, i, j, explored_ptr, score_ptr, perimeter_ptr, is_second_turn, is_perimeter_based);
     CellStatus origin = (*explored_ptr)[i][j];
-    
+
     AdjArray* adj_cells = get_adjacent_coords(game_ptr->board, i, j, SIZE);
     int x, y;
-    
+
     for (int k = 0; k<adj_cells->last; k++) {
         x = get_x(adj_cells, k);
         y = get_y(adj_cells, k);
-    
+
         if (must_be_explored(game_ptr, color, x, y, explored_ptr, is_second_turn, is_perimeter_based, origin)) {
 			explore(game_ptr,color, x, y, explored_ptr, score_ptr, perimeter_ptr, is_second_turn, is_perimeter_based);
         }
@@ -93,16 +93,16 @@ void explore(Game* game_ptr,char color,int i,int j,CellStatus (*explored_ptr)[SI
 char perimeter_based_strategy(Game* game_ptr) {
     int potential_perimeter = -1;
     char color_played = 'A';
-    char neighbour_colors[7] = { 0 }; 
+    char neighbour_colors[7] = { 0 };
     //At the end of the function, neighbour_colors[i] contains 1 if the ith color is adjacent to the player zone, 0 otherwise
     update_possible_colors(game_ptr,&neighbour_colors);
-    
+
     for (int i = 0; i < 7; i++) {
         if (neighbour_colors[i]) {
             char color = i+65;
             int perimeter = 0;
             CellStatus explored[SIZE][SIZE] = { UNEXPLORED };
-            
+
             if (game_ptr->current == A_PLAYING) {
 				explore(game_ptr, color, SIZE-1, 0, &explored, 0, &perimeter,0,1);
             } else {
@@ -121,18 +121,18 @@ char perimeter_based_strategy(Game* game_ptr) {
 char greedy_strategy(Game* game_ptr) {
     int score_gained = 0;
     char color_played = 'A';
-    
+
 	for (int i = 0; i < 7; i++) {
         char color = i+65;
         int score = 0;
         CellStatus explored[SIZE][SIZE] = { UNEXPLORED };
-        
+
         if (game_ptr->current == A_PLAYING) {
 			explore(game_ptr, color, SIZE-1, 0, &explored, &score, 0,0,0);
         } else {
 			explore(game_ptr, color, 0, SIZE-1, &explored, &score, 0,0,0);
         }
-        
+
         if (score > score_gained) {
             score_gained = score;
             color_played = color;
@@ -145,7 +145,7 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
     int score_gained = 0;
     int score1_gained = 0;
     char color_played = 'A';
-    
+
 	for (int i = 0; i < 7; i++){
          for (int j = 0; j < 7; j++) {
             char color1 = i+65;
@@ -153,7 +153,7 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
             int score = 0;
             int score1 = 0;
             CellStatus explored[SIZE][SIZE] = { UNEXPLORED };
-            
+
             if (game_ptr->current == A_PLAYING) {
 				explore(game_ptr, color1, SIZE-1, 0, &explored, &score, 0,0,0);
 				score1 = score;
@@ -168,7 +168,7 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
 					explore(game_ptr,color2,0,SIZE-1,&explored,&score,0,1,0);
 				}
             }
-            
+
             if ((score > score_gained) || (score == score_gained && score1 > score1_gained)) {
                 score_gained = score;
                 score1_gained = score1;
@@ -187,7 +187,7 @@ char ai_strategy(Game* game_ptr) {
 	} else if (game_ptr->game_mode == 3) {
 		return greedy_strategy(game_ptr);
 	} else if (game_ptr->game_mode == 4){
-		
+
 		if (game_ptr->current == A_PLAYING) {
 			return semi_random_strategy(game_ptr);
 		} else {
@@ -196,7 +196,7 @@ char ai_strategy(Game* game_ptr) {
 	} else if (game_ptr->game_mode == 5) {
         return foreseeing_greedy_strategy(game_ptr);
     } else if (game_ptr->game_mode == 6) {
-		
+
 		if (game_ptr->current == A_PLAYING) {
 			return greedy_strategy(game_ptr);
 		} else {
@@ -205,9 +205,9 @@ char ai_strategy(Game* game_ptr) {
 	} else if (game_ptr->game_mode == 7) {
         return perimeter_based_strategy(game_ptr);
     } else if (game_ptr->game_mode == 8) {
-		
+
 		if (game_ptr->current == A_PLAYING) {
-			return foreseeing_greedy_strategy(game_ptr);
+			return greedy_strategy(game_ptr);
 		} else {
 			return perimeter_based_strategy(game_ptr);
 		}
@@ -219,14 +219,14 @@ char ai_strategy(Game* game_ptr) {
 /** Returns 1 if the cell (i,j) is adjacent to a cell possessed by the current_player*/
 char player_adjacent(Game* game_ptr, int i, int j) {
     char player_symbol = get_symbol(game_ptr);
-    
+
     AdjArray* adj_cells = get_adjacent_coords(game_ptr->board, i, j, SIZE);
     int x, y;
-    
+
     for (int k = 0; k<adj_cells->last; k++) {
         x = get_x(adj_cells, k);
         y = get_y(adj_cells, k);
-    
+
         if (game_ptr->board[x][y] == player_symbol) {
 			free_array(adj_cells);
             return 1;

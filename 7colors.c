@@ -92,7 +92,7 @@ void world_update(Game* game_ptr, char color) {
   		for (int j = 0; j < SIZE; j++) {
             if (game_ptr->board[i][j] == color && player_adjacent(game_ptr, i, j)) {
                 game_ptr->board[i][j] = player_symbol;
-                
+
                 if (game_ptr->current == A_PLAYING) {
                     game_ptr->a_score++;
                 } else {
@@ -121,14 +121,14 @@ void update(Game* game_ptr, char color, int i, int j, char explored[SIZE][SIZE])
             game_ptr->b_score++;
         }
     }
-    
+
     AdjArray* adj_cells = get_adjacent_coords(game_ptr->board, i, j, SIZE);
     int x, y;
-    
+
     for (int k = 0; k<adj_cells->last; k++) {
         x = get_x(adj_cells, k);
         y = get_y(adj_cells, k);
-    
+
         if (game_ptr->board[x][y] == color || (game_ptr->board[x][y] == player_symbol && explored[x][y] != 1)) {
             update(game_ptr, color, x, y, explored);
         }
@@ -150,24 +150,24 @@ void play_turn(Game* game_ptr) {
     char c;
     char color;
     char player_symbol = get_symbol(game_ptr);
-    
+
     if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 8 && game_ptr->game_mode != 6 && game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
         do {
             printf("\nWhich color ? (%c turn)\n",player_symbol);
             scanf("%c",&color);
             while((c = getchar()) != '\n' && c != EOF) {} // buffer emptying magic
         }  while (color < 65 || color > 71);
-        
+
     } else {
         color = ai_strategy(game_ptr);
     }
 
     better_world_update(game_ptr, color);
-    
+
   	game_ptr->current = (game_ptr->current + 1) % 2;    //swaps A_PLAYING and B_PLAYING
     game_ptr->a_rate = ((double) game_ptr->a_score/(double) (SIZE * SIZE)) * 100;
     game_ptr->b_rate = ((double) game_ptr->b_score/(double) (SIZE * SIZE)) * 100;
-  	
+
     if (game_ptr->a_rate > 50) {
         game_ptr->current = A_WON;
   	}
@@ -229,7 +229,7 @@ void run_n_times(int n) {
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    run_n_times(10);
+    run_n_times(100);
     /*Game* game_ptr = init_game(8, 1);
     run(game_ptr, 1);
     free_game(game_ptr);*/
