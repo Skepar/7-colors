@@ -106,7 +106,7 @@ char perimeter_based_strategy(Game* game_ptr) {
     //At the end of the function, neighbour_colors[i] contains 1 if the ith color is adjacent to the player zone, 0 otherwise
     update_possible_colors(game_ptr,&neighbour_colors);
 
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 7; i++) { //exploration for each color
         if (neighbour_colors[i]) {
             char color = i+65;
             int perimeter = 0;
@@ -131,7 +131,7 @@ char greedy_strategy(Game* game_ptr) {
     int score_gained = 0;
     char color_played = 'A';
 
-	for (int i = 0; i < 7; i++) {
+	for (int i = 0; i < 7; i++) { //exploration for each color
         char color = i+65;
         int score = 0;
         CellStatus explored[SIZE][SIZE] = { UNEXPLORED };
@@ -156,17 +156,17 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
     char color_played = 'A';
 
 	for (int i = 0; i < 7; i++){
-         for (int j = 0; j < 7; j++) {
+         for (int j = 0; j < 7; j++) { //exploration for each combination of 2 colors
             char color1 = i+65;
             char color2 = j+65;
             int score = 0;
             int score1 = 0;
             CellStatus explored[SIZE][SIZE] = { UNEXPLORED };
 
-            if (game_ptr->current == A_PLAYING) {
+            if (game_ptr->current == A_PLAYING) { // The current player impacts the starting point of the exploration
 				explore(game_ptr, color1, SIZE-1, 0, &explored, &score, 0,0,0);
 				score1 = score;
-				if (i != j) {
+				if (i != j) { // It's useless to test the case where the AI plays 2 times the same color
 					explore(game_ptr, color2, SIZE-1, 0, &explored, &score, 0,1,0);
 				}
 
@@ -179,6 +179,8 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
             }
 
             if ((score > score_gained) || (score == score_gained && score1 > score1_gained)) {
+                 // In case of equality of scores, we must choose the combination where we gain the more score after the first turn,
+                 // to avoid being blocked (if there's only one color available for exemple) 
                 score_gained = score;
                 score1_gained = score1;
                 color_played = color1;
