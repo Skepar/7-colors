@@ -34,8 +34,10 @@ char** init_board(char fair) {
 
 	for (int i = 0; i < SIZE; i++) {
 		board[i] = malloc(SIZE * sizeof(char));
+        // if fair is set to 1, the generated board is symmetrical
         if (fair) {
             for (int j = 0; j <= i; j++) {
+                // A to G are coded in ASCII with the numbers 65 through 71
                 char rand_ch = rand()%7+65;
                 board[i][j] = rand_ch;
                 board[j][i] = rand_ch;
@@ -68,8 +70,6 @@ Game* init_game(char game_mode, char fair) {
     res->b_score = 1;
     res->a_rate = 0.11;
     res->b_rate = 0.11;
-    res->a_perimeter = 2;
-    res->b_perimeter = 2;
     res->game_mode = game_mode;
 
     return res;
@@ -90,15 +90,16 @@ void world_update(Game* game_ptr, char color) {
 
   	for (int i = 0; i < SIZE; i++) {
   		for (int j = 0; j < SIZE; j++) {
-  			if (game_ptr->board[i][j] == color && player_adjacent(game_ptr, i, j)) {
-                  game_ptr->board[i][j] = player_symbol;
-                  if (game_ptr->current == A_PLAYING) {
-                      game_ptr->a_score++;
-                  } else {
-                      game_ptr->b_score++;
-                  }
-                  modified = 1;
-  			}
+            if (game_ptr->board[i][j] == color && player_adjacent(game_ptr, i, j)) {
+                game_ptr->board[i][j] = player_symbol;
+                
+                if (game_ptr->current == A_PLAYING) {
+                    game_ptr->a_score++;
+                } else {
+                    game_ptr->b_score++;
+                }
+                modified = 1;
+            }
   		}
   	}
 
@@ -107,19 +108,7 @@ void world_update(Game* game_ptr, char color) {
   	}
 }
 
-char count_free_cells(Game* game_ptr, int i, int j) {
-	AdjArray* adj= get_adjacent_coords(game_ptr->board, i, j, SIZE);
-	char sum = 0;
-
-	for(int i = 0; i<adj->last; i++) {
-		char c = game_ptr->board[get_x(adj, i)][get_y(adj, i)];
-		if (c >= 65 && c <= 71) sum++;
-	}
-
-	return sum;
-}
-
-void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
+void update(Game* game_ptr, char color, int i, int j, char explored[SIZE][SIZE]) {
   	char player_symbol = get_symbol(game_ptr);
     explored[i][j] = 1;
 
@@ -128,38 +117,27 @@ void update(Game* game_ptr,char color,int i,int j,char explored[SIZE][SIZE]) {
 
         if (game_ptr->current == A_PLAYING) {
             game_ptr->a_score++;
-            game_ptr->a_perimeter += count_free_cells(game_ptr, i, j) - 1;
         } else {
             game_ptr->b_score++;
-            game_ptr->b_perimeter += count_free_cells(game_ptr, i, j) - 1;
         }
     }
-
-    if (i-1 >= 0) {
-        if (game_ptr->board[i-1][j]==color || (game_ptr->board[i-1][j]==player_symbol && explored[i-1][j] != 1)) {
-            update(game_ptr,color,i-1,j,explored);
+    
+    AdjArray* adj_cells = get_adjacent_coords(game_ptr->board, i, j, SIZE);
+    int x, y;
+    
+    for (int k = 0; k<adj_cells->last; k++) {
+        x = get_x(adj_cells, k);
+        y = get_y(adj_cells, k);
+    
+        if (game_ptr->board[x][y] == color || (game_ptr->board[x][y] == player_symbol && explored[x][y] != 1)) {
+            update(game_ptr, color, x, y, explored);
         }
     }
-    if (i+1 < SIZE) {
-        if (game_ptr->board[i+1][j]==color || (game_ptr->board[i+1][j]==player_symbol && explored[i+1][j] != 1)) {
-            update(game_ptr,color,i+1,j,explored);
-        }
-    }
-    if (j-1 >= 0) {
-        if (game_ptr->board[i][j-1]==color || (game_ptr->board[i][j-1]==player_symbol && explored[i][j-1] != 1)) {
-            update(game_ptr,color,i,j-1,explored);
-        }
-    }
-    if (j+1 < SIZE) {
-        if (game_ptr->board[i][j+1]==color || (game_ptr->board[i][j+1]==player_symbol && explored[i][j+1] != 1)) {
-            update(game_ptr,color,i,j+1,explored);
-        }
-    }
+    free_array(adj_cells);
 }
 
 void better_world_update(Game* game_ptr, char color) {
-    char explored[SIZE][SIZE] = {0};
-    //explored[i][j]=1 when the cell (i,j) has already been updated
+    char explored[SIZE][SIZE] = {0};        //explored[i][j]=1 when the cell (i,j) has already been updated
 
     if (game_ptr->current == A_PLAYING) {
         update(game_ptr, color, SIZE-1, 0, explored);
@@ -172,32 +150,32 @@ void play_turn(Game* game_ptr) {
     char c;
     char color;
     char player_symbol = get_symbol(game_ptr);
+    
     if (game_ptr->game_mode == 0 || (game_ptr->game_mode != 6 && game_ptr->game_mode != 4 && game_ptr->current == A_PLAYING)) {
-        printf("\nWhich color ? (%c turn)\n",player_symbol);
-        scanf("%c",&color);
-        while((c = getchar()) != '\n' && c != EOF) {}
-
-        while (color < 65 || color > 71) {
-            printf("\n%c is not a valid color !\nWhich color ? (%c turn)\n",color,player_symbol);
+        do {
+            printf("\nWhich color ? (%c turn)\n",player_symbol);
             scanf("%c",&color);
-            while((c = getchar()) != '\n' && c != EOF) {}
-        }
+            while((c = getchar()) != '\n' && c != EOF) {} // buffer emptying magic
+        }  while (color < 65 || color > 71);
+        
     } else {
-          color = ai_strategy(game_ptr);
+        color = ai_strategy(game_ptr);
     }
 
     better_world_update(game_ptr, color);
-  	game_ptr->current = (game_ptr->current + 1) % 2;    //swap A_PLAYING and B_PLAYING
+    
+  	game_ptr->current = (game_ptr->current + 1) % 2;    //swaps A_PLAYING and B_PLAYING
     game_ptr->a_rate = ((double) game_ptr->a_score/(double) (SIZE * SIZE)) * 100;
     game_ptr->b_rate = ((double) game_ptr->b_score/(double) (SIZE * SIZE)) * 100;
-  	if (game_ptr->a_rate > 50) {
-          game_ptr->current = A_WON;
+  	
+    if (game_ptr->a_rate > 50) {
+        game_ptr->current = A_WON;
   	}
   	if (game_ptr->b_rate > 50) {
-          game_ptr->current = B_WON;
+        game_ptr->current = B_WON;
   	}
   	if (game_ptr->a_rate == game_ptr->b_rate && game_ptr->a_rate >= 50) {
-          game_ptr->current = DRAW;
+        game_ptr->current = DRAW;
   	}
 }
 
@@ -205,8 +183,8 @@ Status run(Game* game_ptr, char verbose) {
     while (game_ptr->current == A_PLAYING || game_ptr->current == B_PLAYING) {
         if (verbose) {
             print_board(game_ptr->board);
-            printf("\nPlayer * owns %.2f %% of the map, has a perimeter of %d", game_ptr->a_rate, game_ptr->a_perimeter);
-            printf("\nPlayer ^ owns %.2f %% of the map, has a perimeter of %d", game_ptr->b_rate, game_ptr->b_perimeter);
+            printf("\nPlayer * owns %.2f %% of the map", game_ptr->a_rate);
+            printf("\nPlayer ^ owns %.2f %% of the map", game_ptr->b_rate);
         }
         play_turn(game_ptr);
     }
@@ -252,7 +230,7 @@ void run_n_times(int n) {
 int main(void) {
     srand(time(NULL));
     //run_n_times(100);
-    Game* game_ptr = init_game(7, 1);
+    Game* game_ptr = init_game(3, 1);
     run(game_ptr, 1);
     free_game(game_ptr);
 

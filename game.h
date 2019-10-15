@@ -19,8 +19,6 @@ struct Game {
     int b_score;
     double a_rate;
 	double b_rate;
-	int a_perimeter;
-	int b_perimeter;
 	char game_mode;
 };
 

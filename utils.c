@@ -12,7 +12,7 @@ AdjArray* new_array(int init_size) {
 }
 
 void add_coord(AdjArray* adj, char x, char y) {
-	if (adj->last < adj->size-1) {
+	if (adj->last <= adj->size-1) {
 		Coord* c = malloc(sizeof(Coord));
 		c->x = x;
 		c->y = y;
@@ -46,10 +46,10 @@ int get_y(AdjArray* adj, int i) {
 AdjArray* get_adjacent_coords(char** board, char i, char j, char size) {
 	AdjArray* res = new_array(4);
 	
-	if (i-1 >= 0) add_coord(res, i-1, j);
-	if (j-1 >= 0) add_coord(res, i, j-1);
-	if (i+1 < size) add_coord(res, i+1, j);
-	if (j+1 < size) add_coord(res, i, j+1);
+	if (i-1 >= 0) { add_coord(res, i-1, j);}
+	if (j-1 >= 0) { add_coord(res, i, j-1);}
+	if (i+1 < size) { add_coord(res, i+1, j);}
+	if (j+1 < size) { add_coord(res, i, j+1);}
 	
 	return res;
 }
