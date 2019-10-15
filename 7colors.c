@@ -14,7 +14,9 @@
 *3 : player VS AI greedy
 *4 : AI semi-random VS AI greedy
 *5 : player VS foreseeing_greedy
-*7 : player VS perimeter based*/
+*6 : greedy VS foreseeing_greedy
+*7 : player VS perimeter based
+*8 : greedy VS perimeter based*/
 
 void print_board(char** board) {
     for (int i = 0; i < 50; i++) {
@@ -202,14 +204,14 @@ Status run(Game* game_ptr, char verbose) {
     return game_ptr->current;
 }
 
-void run_n_times(int n) {
+void run_n_times(int n, int gamemode) {
     int a_victories = 0;
     int b_victories = 0;
     Status result;
 
     time_t start = clock();
     for (int i = 0; i < n; i++) {
-        Game* game_ptr = init_game(6, 1);
+        Game* game_ptr = init_game(gamemode, 1);
         if (rand()%2 == 0) game_ptr->current = B_PLAYING;
 
         result = run(game_ptr, 0);
@@ -223,16 +225,25 @@ void run_n_times(int n) {
     time_t stop = clock();
 
     printf("\nA : %d\nB : %d\n", a_victories, b_victories);
-    printf("in %f s", (double)(stop-start)/CLOCKS_PER_SEC);
+    printf("in %f s\n", (double)(stop-start)/CLOCKS_PER_SEC);
 }
 
 /** Program entry point */
 int main(void) {
     srand(time(NULL));
-    run_n_times(100);
-    /*Game* game_ptr = init_game(8, 1);
-    run(game_ptr, 1);
-    free_game(game_ptr);*/
-
+    printf("list of gamemodes :\n*0 : player VS player\n*1 : player VS AI random\n*2 : player VS AI semi-random\n*3 : player VS AI greedy\n");
+    printf("*4 : AI semi-random (A) VS AI greedy (B)\n*5 : player VS foreseeing_greedy\n*6 : greedy (A) VS foreseeing_greedy (B)\n");
+    printf("*7 : player VS perimeter based\n*8 : greedy (A) VS perimeter based (B)\n");
+    int gamemode;
+    char c;
+    scanf("%d",&gamemode);
+    while((c = getchar()) != '\n' && c != EOF) {}
+    if (gamemode == 4 || gamemode == 6 || gamemode == 8) {
+        run_n_times(100,gamemode);
+    } else {
+        Game* game_ptr = init_game(gamemode, 1);
+        run(game_ptr, 1);
+        free_game(game_ptr);
+    }
 	return 0;
 }
