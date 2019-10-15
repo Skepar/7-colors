@@ -20,6 +20,9 @@ char random_strategy(Game* game_ptr) {
     return rand()%7+65;
 }
 
+
+/**updates the array neighbour_colors, which is filled with 0 before the call of the function, and contains a 1 in the cells corresponding to
+a color which is adjacent to the player's territory. Cell 0 corresponds to color A, 1 corresponds to B, 2 to C, etc. */
 void update_possible_colors(Game* game_ptr, char (*neighbour_colors)[7]) {
     for (int i = 0; i < SIZE; i++) {
   		for (int j = 0; j < SIZE; j++) {
@@ -37,15 +40,17 @@ char semi_random_strategy(Game* game_ptr) {
     if (n==0) {
         return 'A';
     } else {
-        return nth_occurence(rand()%n, 1, neighbour_colors, 7)+65;
+        return nth_occurence(rand()%n, 1, neighbour_colors, 7)+65; // The +65 is there to "convert" the int into a valid color
     }
 }
 
+/**Updates the value of the case (i,j) in the array explored during an exploration. The effect of the function depends
+on which type of exploration is happening. The arguments is_second_turn and is_perimeter_based indicate the type of the exploration  */
 void update_cell(Game* game_ptr,char color,int i,int j,CellStatus (*explored_ptr)[SIZE][SIZE],int* score_ptr, int* perimeter_ptr, int is_second_turn, int is_perimeter_based) {
     char player_symbol = get_symbol(game_ptr);
     if (game_ptr->board[i][j]==color) {
         if (!is_perimeter_based) {
-            *score_ptr += 1;
+            *score_ptr += 1; //If we're not during the perimeter based algorithm, we're in the greedy algorithm, so we count the score gained if we explore a cell of the right color
         }
         (*explored_ptr)[i][j] = COLOR;
     } else if (game_ptr->board[i][j]==player_symbol) {
@@ -53,7 +58,7 @@ void update_cell(Game* game_ptr,char color,int i,int j,CellStatus (*explored_ptr
     } else {
         (*explored_ptr)[i][j] = NOT_COLOR;
         if (is_perimeter_based) {
-            *perimeter_ptr += 1;
+            *perimeter_ptr += 1; //If we're during the perimeter based algorithm, we increase the perimeter counter each time we see a cell adjacent to the territory that the player would have if he had played color
         }
     }
     if (is_second_turn) {
@@ -61,17 +66,21 @@ void update_cell(Game* game_ptr,char color,int i,int j,CellStatus (*explored_ptr
     }
 }
 
+/** During an exploration, if the cell (i,j) is adjacent to a cell of status origin which is being explored, this function will be called. It will return 1 if
+the cell needs to be explored and 0 otherwise */
 int must_be_explored(Game* game_ptr, char color, int i, int j, CellStatus (*explored_ptr)[SIZE][SIZE], int is_second_turn, int is_perimeter_based, CellStatus origin) {
     char player_symbol = get_symbol(game_ptr);
-    if (is_second_turn) {
+    if (is_second_turn) { //During the second turn of exploration (for forseeing greedy strategy), we'll explore cells that are either of the second color tested, or that are in the territory that the player would have if he had played the first color tested AND that aren't explored yet during the second exploration
         return ((game_ptr->board[i][j]==color || (*explored_ptr)[i][j]==COLOR || (*explored_ptr)[i][j]==PLAYER) && (*explored_ptr)[i][j] != EXPLORED_TWO_TIMES);
-    } else if (is_perimeter_based){
+    } else if (is_perimeter_based){ //If we're perimeter based, we only want to explore cells that are unexplored and next to the territory that the player would have if he had played the color tested
         return ((*explored_ptr)[i][j] == UNEXPLORED && origin != NOT_COLOR);
-    } else {
+    } else { //In the greedy exploration, we just want to explore cells with the color tested or cells of the player
         return ((game_ptr->board[i][j] == color || game_ptr->board[i][j] == player_symbol) && (*explored_ptr)[i][j] == UNEXPLORED);
     }
 }
 
+/** explore is called recursively on each cell that needs to be explored (these cells depend on the type of exploration that we're doing), updates the cells Status
+in the array explored, and increments the counter of score or perimeter depending on the type of exploration.*/
 void explore(Game* game_ptr,char color,int i,int j,CellStatus (*explored_ptr)[SIZE][SIZE],int* score_ptr,int* perimeter_ptr, int is_second_turn, int is_perimeter_based) {
   	update_cell(game_ptr, color, i, j, explored_ptr, score_ptr, perimeter_ptr, is_second_turn, is_perimeter_based);
     CellStatus origin = (*explored_ptr)[i][j];
@@ -97,7 +106,7 @@ char perimeter_based_strategy(Game* game_ptr) {
     //At the end of the function, neighbour_colors[i] contains 1 if the ith color is adjacent to the player zone, 0 otherwise
     update_possible_colors(game_ptr,&neighbour_colors);
 
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 7; i++) { //exploration for each color
         if (neighbour_colors[i]) {
             char color = i+65;
             int perimeter = 0;
@@ -122,7 +131,7 @@ char greedy_strategy(Game* game_ptr) {
     int score_gained = 0;
     char color_played = 'A';
 
-	for (int i = 0; i < 7; i++) {
+	for (int i = 0; i < 7; i++) { //exploration for each color
         char color = i+65;
         int score = 0;
         CellStatus explored[SIZE][SIZE] = { UNEXPLORED };
@@ -147,17 +156,17 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
     char color_played = 'A';
 
 	for (int i = 0; i < 7; i++){
-         for (int j = 0; j < 7; j++) {
+         for (int j = 0; j < 7; j++) { //exploration for each combination of 2 colors
             char color1 = i+65;
             char color2 = j+65;
             int score = 0;
             int score1 = 0;
             CellStatus explored[SIZE][SIZE] = { UNEXPLORED };
 
-            if (game_ptr->current == A_PLAYING) {
+            if (game_ptr->current == A_PLAYING) { // The current player impacts the starting point of the exploration
 				explore(game_ptr, color1, SIZE-1, 0, &explored, &score, 0,0,0);
 				score1 = score;
-				if (i != j) {
+				if (i != j) { // It's useless to test the case where the AI plays 2 times the same color
 					explore(game_ptr, color2, SIZE-1, 0, &explored, &score, 0,1,0);
 				}
 
@@ -170,6 +179,8 @@ char foreseeing_greedy_strategy(Game* game_ptr) {
             }
 
             if ((score > score_gained) || (score == score_gained && score1 > score1_gained)) {
+                 // In case of equality of scores, we must choose the combination where we gain the more score after the first turn,
+                 // to avoid being blocked (if there's only one color available for exemple) 
                 score_gained = score;
                 score1_gained = score1;
                 color_played = color1;
