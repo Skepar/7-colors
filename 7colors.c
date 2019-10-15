@@ -238,7 +238,7 @@ int main(void) {
     char c;
     scanf("%d",&gamemode);
     while((c = getchar()) != '\n' && c != EOF) {}
-    if (gamemode == 4 || gamemode == 6 || gamemode == 8) {
+    if (gamemode == 4 || gamemode == 6 || gamemode == 8) { //Gamemodes where the human don't play
         run_n_times(100,gamemode);
     } else {
         Game* game_ptr = init_game(gamemode, 1);
